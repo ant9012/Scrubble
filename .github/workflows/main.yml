@@ -40,9 +40,10 @@ jobs:
         # setup frameworks directory
         mkdir -p $THEOS/lib
         
-    - name: setup ios sdk
+    - name: setup ios sdk and dependencies
       run: |
         export THEOS=$HOME/theos
+        export PATH=$THEOS/bin:$PATH
         
         # download ios sdk using sparse checkout from official theos sdks
         git clone --quiet -n --depth=1 --filter=tree:0 https://github.com/theos/sdks/
@@ -58,13 +59,18 @@ jobs:
         ls -la $THEOS/sdks/
         ls -la $THEOS/sdks/iPhoneOS14.5.sdk/
 
-        git clone https://github.com/opa334/AltList.git
-        
-        cd AltList
+        # Clone and install AltList framework globally to Theos path
+        git clone --recursive https://github.com/opa334/AltList.git /tmp/AltList
+        cd /tmp/AltList
         chmod +x install_to_theos.sh
-        ./install_to_theos.sh
-        cd ..
-    # No external frameworks needed - using standard iOS preferences only
+        
+        # Force AltList to build using the 14.5 SDK we just pulled
+        make clean
+        ./install_to_theos.sh TARGET=iphone:clang:14.5:14.0
+        
+        # Clean up temporary files
+        cd $GITHUB_WORKSPACE
+        rm -rf /tmp/AltList
         
     - name: update version from commit
       run: |
@@ -74,7 +80,6 @@ jobs:
         COMMIT_NUMBER=$(git rev-parse --short HEAD 2>/dev/null || echo "${{ github.run_number }}")
         
         # update version in control file using run number for better versioning
-        # format: Version: 1.6 -> Version: 1.6.$RUN_NUMBER
         VERSION="1.6.${{ github.run_number }}"
         
         # update control file (macos uses different sed syntax)
@@ -88,8 +93,6 @@ jobs:
       run: |
         export THEOS=$HOME/theos
         export PATH=$THEOS/bin:$PATH
-
-
         
         # build the main tool for rootless jailbreaks (dopamine, palera1n, etc.)
         cd $GITHUB_WORKSPACE
@@ -104,4 +107,3 @@ jobs:
         name: tweak-package
         path: packages/
         retention-days: 30
-        
