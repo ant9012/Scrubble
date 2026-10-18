@@ -57,7 +57,13 @@ jobs:
         # verify sdk installation
         ls -la $THEOS/sdks/
         ls -la $THEOS/sdks/iPhoneOS14.5.sdk/
+
+        git clone https://github.com/opa334/AltList.git
         
+        cd AltList
+        chmod +x install_to_theos.sh
+        ./install_to_theos.sh
+        cd ..
     # No external frameworks needed - using standard iOS preferences only
         
     - name: update version from commit
