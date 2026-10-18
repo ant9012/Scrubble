@@ -40,7 +40,7 @@ jobs:
         # setup frameworks directory
         mkdir -p $THEOS/lib
         
-        - name: setup ios sdk and dependencies
+    - name: setup ios sdk and dependencies
       run: |
         export THEOS=$HOME/theos
         export PATH=$THEOS/bin:$PATH
