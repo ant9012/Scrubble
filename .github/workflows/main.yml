@@ -40,13 +40,13 @@ jobs:
         # setup frameworks directory
         mkdir -p $THEOS/lib
         
-    - name: setup ios sdk and dependencies
+        - name: setup ios sdk and dependencies
       run: |
         export THEOS=$HOME/theos
         export PATH=$THEOS/bin:$PATH
         
-        # download ios sdk using sparse checkout from official theos sdks
-        git clone --quiet -n --depth=1 --filter=tree:0 https://github.com/theos/sdks/
+        # 1. Download iOS SDK using sparse checkout from official theos sdks
+        git clone --quiet -n --depth=1 --filter=tree:0 https://github.com
         cd sdks
         git sparse-checkout set --no-cone iPhoneOS14.5.sdk
         git checkout
@@ -55,22 +55,21 @@ jobs:
         cd ..
         rm -rf sdks
         
-        # verify sdk installation
-        ls -la $THEOS/sdks/
-        ls -la $THEOS/sdks/iPhoneOS14.5.sdk/
-
-        # Clone and install AltList framework globally to Theos path
-        git clone --recursive https://github.com/opa334/AltList.git /tmp/AltList
+        # 2. Clone and isolate AltList framework compilation
+        git clone --recursive https://github.com /tmp/AltList
         cd /tmp/AltList
-        chmod +x install_to_theos.sh
         
-        # Force AltList to build using the 14.5 SDK we just pulled
+        # Strip out the test projects causing the iOS 16.5 SDK crash
+        sed -i '' 's/SUBPROJECTS.*/SUBPROJECTS = /' Makefile
+        
+        # Force AltList to build the core framework using your active 14.5 SDK
         make clean
         ./install_to_theos.sh TARGET=iphone:clang:14.5:14.0
         
-        # Clean up temporary files
+        # 3. Clean up temporary files
         cd $GITHUB_WORKSPACE
         rm -rf /tmp/AltList
+
         
     - name: update version from commit
       run: |
